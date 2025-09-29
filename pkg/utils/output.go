@@ -27,28 +27,6 @@ func NewCliOutput(verbose bool) *CliOutput {
 	}
 }
 
-// Legacy functions for backward compatibility
-func PrintSuccess(format string, args ...interface{}) {
-	fmt.Printf("✅ %s\n", Success(fmt.Sprintf(format, args...)))
-}
-
-func PrintError(format string, args ...interface{}) {
-	fmt.Printf("❌ %s\n", Error(fmt.Sprintf(format, args...)))
-}
-
-func PrintWarning(format string, args ...interface{}) {
-	fmt.Printf("⚠️  %s\n", Warning(fmt.Sprintf(format, args...)))
-}
-
-func PrintInfo(format string, args ...interface{}) {
-	fmt.Printf("ℹ️  %s\n", Info(fmt.Sprintf(format, args...)))
-}
-
-func PrintBold(format string, args ...interface{}) {
-	fmt.Printf("%s\n", Bold(fmt.Sprintf(format, args...)))
-}
-
-// Simple CLI output methods
 func (c *CliOutput) Info(format string, args ...interface{}) {
 	fmt.Printf("ℹ️  %s\n", Info(fmt.Sprintf(format, args...)))
 }

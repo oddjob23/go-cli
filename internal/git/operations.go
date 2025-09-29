@@ -137,7 +137,7 @@ func (o *Operations) handleGitError(output string, command string) (error, strin
 		return fmt.Errorf("%s", output), "Repository path does not exist"
 	case strings.Contains(outputLower, "permission denied"):
 		return fmt.Errorf("%s", output), "Permission denied accessing repository"
-	case strings.Contains(outputLower, "repository not found") || strings.Contains(outputLower, "could not read from remote"):
+	case (strings.Contains(outputLower, "repository") && strings.Contains(outputLower, "not found")) || strings.Contains(outputLower, "could not read from remote"):
 		return fmt.Errorf("%s", output), "Remote repository not accessible or not found"
 	case strings.Contains(outputLower, "no tracking information"):
 		return fmt.Errorf("%s", output), "No tracking branch configured for this branch"

@@ -201,6 +201,27 @@ make test-integration
 - **Automation**: Makefile commands for easy execution
 - **Real Repositories**: Tests against actual GitHub repositories
 
+### Test Naming Convention
+All test cases MUST follow a descriptive naming pattern that clearly explains the expected behavior:
+
+**Format**: `"should [expected action/result] when [condition/scenario]"`
+
+**Examples**:
+- ✅ `"should return true when path is a valid directory"`
+- ✅ `"should return error when file does not exist"`
+- ✅ `"should load valid config with custom branch"`
+- ✅ `"should handle uncommitted changes error"`
+- ✅ `"should checkout main and pull when on different branch"`
+- ❌ `"valid directory"` (too vague)
+- ❌ `"test error handling"` (not descriptive)
+- ❌ `"happy path"` (unclear what is being tested)
+
+**Benefits**:
+- Makes test failures immediately understandable
+- Serves as living documentation of expected behavior
+- Forces developers to think about what they're testing
+- Easy to scan test output and understand what broke
+
 ### Test Commands
 ```bash
 # Quick unit tests
