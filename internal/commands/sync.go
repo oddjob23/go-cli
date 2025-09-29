@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/oddjob23/go-cli/internal/git"
 	"github.com/oddjob23/go-cli/pkg/config"
@@ -20,20 +21,16 @@ the main branch and pulling the latest changes. Processes repositories in parall
 
 func runSync(cmd *cobra.Command, args []string) error {
 	// Get flags
-	directory, _ := cmd.Flags().GetString("directory")
+	configFile, _ := cmd.Flags().GetString("config")
 	branch, _ := cmd.Flags().GetString("branch")
-	envFile, _ := cmd.Flags().GetString("env-file")
 
 	// Load configuration
-	cfg, err := config.LoadFromFile(envFile)
+	cfg, err := config.LoadFromFile(configFile)
 	if err != nil {
 		return fmt.Errorf("failed to load configuration: %w", err)
 	}
 
-	// Override with command line flags if provided
-	if directory != "" {
-		cfg.ScanDirectory = directory
-	}
+	// Override branch if provided via command line
 	if branch != "" {
 		cfg.GitBranch = branch
 	}
@@ -46,32 +43,53 @@ func runSync(cmd *cobra.Command, args []string) error {
 	// Create output handler
 	output := utils.NewCliOutput(false) // Set to true for verbose mode if needed
 
-	// Create syncer and run sync
+	// Create syncer
 	syncer := git.NewSyncer(output)
 
-	output.Info("Starting Git repository sync in: %s", cfg.ScanDirectory)
+	output.Info("Starting Git repository sync for %d configured repositories", len(cfg.Repositories))
 	output.Info("Target branch: %s", cfg.GitBranch)
 
-	result, err := syncer.SyncRepositories(cfg.ScanDirectory, cfg.GitBranch)
-	if err != nil {
-		output.Error("Sync failed: %v", err)
-		return err
+	// Sync each configured repository in parallel
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var successCount, failureCount int
+
+	output.Plain("")
+
+	for _, repo := range cfg.Repositories {
+		wg.Add(1)
+		go func(r config.Repository) {
+			defer wg.Done()
+
+			output.Plain("  📂 %s", r.Name)
+			err := syncer.SyncSingleRepository(r.Path, cfg.GitBranch)
+
+			mu.Lock()
+			if err != nil {
+				output.Plain("     ❌ Failed to sync - %s", err.Error())
+				failureCount++
+			} else {
+				output.Plain("    ✅  Successfully pulled %s branch", cfg.GitBranch)
+				successCount++
+			}
+			mu.Unlock()
+		}(repo)
 	}
 
-	// Print results
-	syncer.PrintSummary(result)
+	// Wait for all repositories to complete
+	wg.Wait()
 
 	// Print final summary
-	if result.TotalRepositories == 0 {
-		output.Warning("No Git repositories found in the specified directory")
+	if len(cfg.Repositories) == 0 {
+		output.Warning("No repositories configured")
 		return nil
 	}
 
-	if result.FailureCount == 0 {
-		output.Success("All %d repositories synced successfully!", result.SuccessCount)
+	if failureCount == 0 {
+		output.Success("All %d repositories synced successfully!", successCount)
 	} else {
 		output.Warning("Synced %d/%d repositories successfully. %d failed.",
-			result.SuccessCount, result.TotalRepositories, result.FailureCount)
+			successCount, len(cfg.Repositories), failureCount)
 
 		// Exit with error code if any repositories failed
 		os.Exit(1)

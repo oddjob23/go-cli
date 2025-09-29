@@ -2,6 +2,7 @@ package git
 
 import (
 	"fmt"
+	"path/filepath"
 	"sync"
 
 	"github.com/oddjob23/go-cli/pkg/utils"
@@ -69,6 +70,24 @@ func (s *Syncer) SyncRepositories(rootDir string, branchName string) (*SyncResul
 	}
 
 	return syncResult, nil
+}
+
+// SyncSingleRepository syncs a single repository at the given path
+func (s *Syncer) SyncSingleRepository(repoPath string, branchName string) error {
+	// Create a Repository struct for the path
+	repo := Repository{
+		Path: repoPath,
+		Name: filepath.Base(repoPath),
+	}
+
+	// Perform the sync operation
+	result := s.operations.CheckoutMainBranch(repo, branchName)
+
+	if !result.Success {
+		return result.Error
+	}
+
+	return nil
 }
 
 // processRepositoriesParallel processes multiple repositories concurrently using goroutines

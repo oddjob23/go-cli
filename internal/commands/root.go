@@ -22,7 +22,6 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringP("directory", "d", "", "Directory to scan for Git repositories")
+	rootCmd.PersistentFlags().StringP("config", "c", "config.json", "Path to config.json file")
 	rootCmd.PersistentFlags().StringP("branch", "b", "main", "Git branch to checkout and pull")
-	rootCmd.PersistentFlags().StringP("env-file", "e", "", "Path to .env file")
 }
